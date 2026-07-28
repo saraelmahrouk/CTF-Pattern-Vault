@@ -7,36 +7,43 @@ from config import parser, format_instructions, HF_TOKEN
 from transformers import pipeline
 from langchain_huggingface import HuggingFacePipeline, ChatHuggingFace
 from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
+from langchain_groq import ChatGroq
 import torch
 
-quant_config = BitsAndBytesConfig(
-    load_in_4bit=True,
-    bnb_4bit_quant_type="nf4",
-    bnb_4bit_compute_dtype=torch.float16,
+# quant_config = BitsAndBytesConfig(
+#     load_in_4bit=True,
+#     bnb_4bit_quant_type="nf4",
+#     bnb_4bit_compute_dtype=torch.float16,
+# )
+
+# model_id = "mistralai/Mistral-7B-Instruct-v0.2"
+
+# tokenizer = AutoTokenizer.from_pretrained(model_id)
+# model = AutoModelForCausalLM.from_pretrained(
+#     model_id,
+#     quantization_config=quant_config,
+#     device_map={"": 0},
+#     token=HF_TOKEN
+# )
+
+# text_gen_pipeline = pipeline(
+#     "text-generation",
+#     model=model,
+#     tokenizer=tokenizer,
+#     max_new_tokens=512,
+#     max_length=None,
+#     temperature=0.3,
+#     return_full_text=False,
+# )
+
+# llm = HuggingFacePipeline(pipeline=text_gen_pipeline)
+# chat_model = ChatHuggingFace(llm=llm)
+
+chat_model = ChatGroq(
+    model="llama-3.3-70b-versatile",
+    temperature=0.1,
+    max_retries=5
 )
-
-model_id = "mistralai/Mistral-7B-Instruct-v0.2"
-
-tokenizer = AutoTokenizer.from_pretrained(model_id)
-model = AutoModelForCausalLM.from_pretrained(
-    model_id,
-    quantization_config=quant_config,
-    device_map={"": 0},
-    token=HF_TOKEN
-)
-
-text_gen_pipeline = pipeline(
-    "text-generation",
-    model=model,
-    tokenizer=tokenizer,
-    max_new_tokens=512,
-    max_length=None,
-    temperature=0.3,
-    return_full_text=False,
-)
-
-llm = HuggingFacePipeline(pipeline=text_gen_pipeline)
-chat_model = ChatHuggingFace(llm=llm)
 
 extraction_prompt = ChatPromptTemplate.from_template(
     "Extract structured info from this CTF writeup.\n{format_instructions}\n\nWriteup:\n{writeup}"
@@ -127,7 +134,7 @@ def extract_all(docs):
         else:
             failed.append(source)
 
-        time.sleep(1)
+        time.sleep(15)
 
     print(f"\nDone: {len(clean_docs)} total ({len(new_docs)} new), {len(failed)} failed")
     return clean_docs, new_docs, failed

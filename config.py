@@ -5,6 +5,7 @@ from langchain_classic.output_parsers import StructuredOutputParser, ResponseSch
 load_dotenv()
 
 HF_TOKEN = os.getenv("HF_TOKEN")
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 CHAT_MODEL_REPO = "mistralai/Mistral-7B-Instruct-v0.2"
 CHAT_PROVIDER = "together"
 EMBEDDING_MODEL_REPO = "sentence-transformers/all-MiniLM-L6-v2"
