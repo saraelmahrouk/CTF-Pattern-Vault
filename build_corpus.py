@@ -2,8 +2,8 @@ import os
 from loaders import clone_repos, load_writeups
 from extraction import extract_all
 from vectorstore import build_and_save, load
+from config import CORPUS_PATH
 
-CORPUS_PATH = "ctf_corpus"
 INDEX_FILE = os.path.join(CORPUS_PATH, "index.faiss")
 
 def main():

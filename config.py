@@ -9,6 +9,7 @@ GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 CHAT_MODEL_REPO = "mistralai/Mistral-7B-Instruct-v0.2"
 CHAT_PROVIDER = "together"
 EMBEDDING_MODEL_REPO = "sentence-transformers/all-MiniLM-L6-v2"
+CORPUS_PATH = "ctf_corpus"
 
 response_schemas = [
     ResponseSchema(name="vulnerability_class", description="e.g. 'PDF injection' or 'weak cipher mode'"),

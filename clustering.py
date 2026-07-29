@@ -60,7 +60,7 @@ def cluster_biased_retrieve(vectorstore, query, k=4, pool_size=10):
     reranked = sorted(candidates, key=sort_key)
     return [doc for doc, score in reranked[:k]]
 
-def get_cluster_topic_docs(vectorstore, query, max_cards=15):
+def get_cluster_topic_docs(vectorstore, query, max_cards=5):
     kmeans, pca = load_models()
     query_embedding = vectorstore.embeddings.embed_query(query)
     predicted_cluster = predict_query_cluster(query_embedding)
@@ -75,7 +75,7 @@ def get_cluster_topic_docs(vectorstore, query, max_cards=15):
 
     return matching_docs[:max_cards]
 
-def find_optimal_k(max_k=10):
+def find_optimal_k(max_k=15):
     # 1. Load the existing LangChain FAISS vectorstore
     print("Loading vectorstore...")
     vectorstore = load() 
@@ -203,6 +203,10 @@ def update_with_new(new_embeddings):
     return kmeans, pca
 
 if __name__ == "__main__":
-    fit_initial(embeddings)
-    # cluster_and_display()
+    # fit_initial(embeddings)
+    update_with_new(embeddings)
+    find_optimal_k()
+    cluster_and_display()
+
+
 
