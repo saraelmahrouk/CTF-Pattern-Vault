@@ -4,6 +4,7 @@ from extraction import extract_writeup, append_progress
 from clustering import update_with_new
 from config import CORPUS_PATH
 from vectorstore import load
+from model_loader import get_chat_model
 
 vectorstore = load(CORPUS_PATH)
 
@@ -14,8 +15,9 @@ def is_duplicate(vectorstore, label):
 def add_user_writeup(vectorstore, raw_text, label):
     if is_duplicate(vectorstore, label):
         return None, None, f"A writeup labeled '{label}' already exists in the corpus."
-
-    clean_doc, result = extract_writeup(raw_text, source_path=label)
+    
+    extraction_model = get_chat_model(use_local=False)  # always Groq, regardless of UI toggle
+    clean_doc, result = extract_writeup(raw_text, source_path=label, chat_model=extraction_model)
     if clean_doc is None:
         return None, None, "Extraction failed — could not process this writeup."
 

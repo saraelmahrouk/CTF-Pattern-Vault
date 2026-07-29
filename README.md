@@ -97,7 +97,6 @@ To add new public writeups to the corpus later, just use the tab in the website 
 
 # 📸 Demo
 
-Add screenshots, GIFs, or a demo video.
 
 ---
 

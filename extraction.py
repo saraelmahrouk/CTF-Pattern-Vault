@@ -5,50 +5,15 @@ from langchain_core.documents import Document
 from langchain_core.prompts import ChatPromptTemplate
 from config import parser, format_instructions, HF_TOKEN
 from transformers import pipeline
-from langchain_huggingface import HuggingFacePipeline, ChatHuggingFace
-from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
-from langchain_groq import ChatGroq
+from model_loader import get_chat_model
 import torch
 
-# quant_config = BitsAndBytesConfig(
-#     load_in_4bit=True,
-#     bnb_4bit_quant_type="nf4",
-#     bnb_4bit_compute_dtype=torch.float16,
-# )
 
-# model_id = "mistralai/Mistral-7B-Instruct-v0.2"
-
-# tokenizer = AutoTokenizer.from_pretrained(model_id)
-# model = AutoModelForCausalLM.from_pretrained(
-#     model_id,
-#     quantization_config=quant_config,
-#     device_map={"": 0},
-#     token=HF_TOKEN
-# )
-
-# text_gen_pipeline = pipeline(
-#     "text-generation",
-#     model=model,
-#     tokenizer=tokenizer,
-#     max_new_tokens=512,
-#     max_length=None,
-#     temperature=0.3,
-#     return_full_text=False,
-# )
-
-# llm = HuggingFacePipeline(pipeline=text_gen_pipeline)
-# chat_model = ChatHuggingFace(llm=llm)
-
-chat_model = ChatGroq(
-    model="llama-3.3-70b-versatile",
-    temperature=0.1,
-    max_retries=5
-)
 
 extraction_prompt = ChatPromptTemplate.from_template(
     "Extract structured info from this CTF writeup.\n{format_instructions}\n\nWriteup:\n{writeup}"
+    "Always return JSON objects"
 )
-extraction_chain = extraction_prompt | chat_model | parser
 
 PROGRESS_FILE = "extraction_progress.jsonl"
 
@@ -74,8 +39,11 @@ def _build_document(result, source_path):
     )
 
 
-def extract_writeup(raw_text, source_path):
-    """Returns (Document, raw_result_dict) or (None, None) on failure."""
+def build_extraction_chain(chat_model):
+    return extraction_prompt | chat_model | parser
+
+def extract_writeup(raw_text, source_path, chat_model):
+    extraction_chain = build_extraction_chain(chat_model)
     try:
         result = extraction_chain.invoke({"format_instructions": format_instructions, "writeup": raw_text})
     except Exception as e:
@@ -106,7 +74,7 @@ def append_progress(source, result):
         f.write(json.dumps({"source": source, "result": result}) + "\n")
 
 
-def extract_all(docs):
+def extract_all(docs, chat_model):
     """
     Returns (all_clean_docs, newly_extracted_docs, failed).
     all_clean_docs: every successfully extracted Document (skipped + new) — use for full rebuilds.
@@ -125,7 +93,7 @@ def extract_all(docs):
             continue
 
         print(f"Processing {i+1}/{len(docs)}: {source}")
-        clean, result = extract_writeup(doc.page_content, source)
+        clean, result = extract_writeup(doc.page_content, source, chat_model)
 
         if clean:
             clean_docs.append(clean)
@@ -138,3 +106,23 @@ def extract_all(docs):
 
     print(f"\nDone: {len(clean_docs)} total ({len(new_docs)} new), {len(failed)} failed")
     return clean_docs, new_docs, failed
+
+
+def build_training_data(progress_file="extraction_progress.jsonl", output_file="training_data.jsonl"):
+    with open(progress_file, "r", encoding="utf-8") as f, open(output_file, "w", encoding="utf-8") as out:
+        for line in f:
+            entry = json.loads(line)
+            result = entry["result"]
+
+            # skip junk/empty extractions (the "None" ones you found earlier)
+            if result.get("vulnerability_class") in (None, "None"):
+                continue
+
+            example = {
+                "prompt": f"Extract structured info from this CTF writeup.\n\nWriteup:\n{entry['source']}",
+                "completion": json.dumps(result)
+            }
+            out.write(json.dumps(example) + "\n")
+
+if __name__ == "__main__":
+    build_training_data()

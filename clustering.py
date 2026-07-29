@@ -177,7 +177,7 @@ def load_models():
     pca = joblib.load(PCA_MODEL_PATH)
     return kmeans, pca
 
-def fit_initial(embeddings, k=6, pca_components=5):
+def fit_initial(embeddings, k=7, pca_components=5):
     pca = PCA(n_components=pca_components, random_state=42)
     reduced = pca.fit_transform(embeddings)
 
@@ -203,10 +203,10 @@ def update_with_new(new_embeddings):
     return kmeans, pca
 
 if __name__ == "__main__":
-    # fit_initial(embeddings)
-    update_with_new(embeddings)
-    find_optimal_k()
-    cluster_and_display()
+    fit_initial(embeddings)
+    # update_with_new(embeddings)
+    # find_optimal_k()
+    # cluster_and_display()
 
 
 

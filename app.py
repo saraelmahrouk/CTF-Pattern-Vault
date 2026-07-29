@@ -1,10 +1,10 @@
-import os
-import time
 import streamlit as st
-from vectorstore import load
-from rag_chain import build_rag_chain, build_hint_chain, build_coaching_chain
+from model_loader import get_chat_model
+from load_everything import load_everything
 from ingestion import add_user_writeup
-from config import CORPUS_PATH
+import pypdf
+import io
+import time
 
 # ==========================================================
 # 1. PIXEL THEME & CSS INJECTION (Including Sidebar Styling)
@@ -259,28 +259,28 @@ def apply_pixel_theme():
 # Apply theme immediately on startup
 apply_pixel_theme()
 
-# ==========================================================
-# 2. VECTORSTORE & CHAIN INITIALIZATION
-# ==========================================================
-INDEX_FILE = os.path.join(CORPUS_PATH, "index.faiss")
-
-@st.cache_resource
-def load_everything():
-    if not os.path.exists(INDEX_FILE):
-        st.error(f"No corpus found at {CORPUS_PATH}. Run `python build_corpus.py` first.")
-        st.stop()
-
-    vectorstore = load(CORPUS_PATH)
-    rag_chain = build_rag_chain(vectorstore)
-    hint_chain = build_hint_chain(vectorstore)
-    coaching_chain = build_coaching_chain(vectorstore)
-    return vectorstore, rag_chain, hint_chain, coaching_chain
-
-vectorstore, rag_chain, hint_chain, coaching_chain = load_everything()
 
 # ==========================================================
 # 3. SIDEBAR NAVIGATION ("SIDE TABS")
 # ==========================================================
+
+# 1. CSS to right-align the toggle while keeping native Streamlit theme colors
+st.markdown("""
+<style>
+    div[data-testid="stColumn"]:nth-child(2) div[data-testid="stToggle"] {
+        display: flex;
+        justify-content: flex-end;
+    }
+</style>
+""", unsafe_allow_html=True)
+
+# 2. Toggle in upper right corner
+_, col_toggle = st.columns([3, 1], vertical_alignment="center")
+with col_toggle:
+    use_offline = st.toggle("Offline Mode", value=False)
+
+vectorstore, rag_chain, hint_chain, coaching_chain = load_everything(use_offline)
+
 with st.sidebar:
     st.markdown('<h1 class="logo-title">CTF COACH</h1>', unsafe_allow_html=True)
     st.markdown("---")
@@ -303,6 +303,7 @@ if selected_tab == "Direct Help":
         def response_generator():
             for chunk in rag_chain.stream(question):
                 yield chunk
+                time.sleep(0.05)
         st.write_stream(response_generator)
 
 elif selected_tab == "Hints":
@@ -338,25 +339,29 @@ elif selected_tab == "Coaching":
         def response_generator():
             for chunk in coaching_chain.stream(topic):
                 yield chunk
-            time.sleep(0.20)
         st.write_stream(response_generator)
 
 elif selected_tab == "Upload Writeup":
     st.subheader("[+] ADD WRITEUP TO CORPUS")
 
     with st.form("upload_form", clear_on_submit=True):
-        uploaded_file = st.file_uploader("Or upload a file", type=["md", "txt"], key="writeup_file")
+        uploaded_file = st.file_uploader("Or upload a file", type=["md", "txt", "pdf"], key="writeup_file")
         label = st.text_input("Give this writeup a label/name", key="writeup_label")
         writeup_text = st.text_area("Or paste your writeup here", key="writeup_text", height=300)
         submitted = st.form_submit_button("SUBMIT WRITEUP")
 
     if submitted:
         if uploaded_file is not None:
-            final_text = uploaded_file.read().decode("utf-8", errors="replace")
+            if uploaded_file.name.lower().endswith(".pdf"):
+                reader = pypdf.PdfReader(io.BytesIO(uploaded_file.read()))
+                final_text = "\n".join(page.extract_text() or "" for page in reader.pages)
+            else:
+                final_text = uploaded_file.read().decode("utf-8", errors="replace")
             final_label = label or uploaded_file.name
         else:
             final_text = writeup_text
             final_label = label
+
         doc, result, error = add_user_writeup(vectorstore, final_text, final_label)
         if error:
             st.error(error)

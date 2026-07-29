@@ -3,10 +3,12 @@ from loaders import clone_repos, load_writeups
 from extraction import extract_all
 from vectorstore import build_and_save, load
 from config import CORPUS_PATH
+from model_loader import get_chat_model
 
 INDEX_FILE = os.path.join(CORPUS_PATH, "index.faiss")
 
 def main():
+    chat_model = get_chat_model(use_local=False)
     index_exists = os.path.exists(INDEX_FILE)
 
     clone_repos(["https://github.com/rsa-ctf/write-ups"])
