@@ -1,10 +1,17 @@
-import streamlit as st
-from model_loader import get_chat_model
-from load_everything import load_everything
-from ingestion import add_user_writeup
-import pypdf
-import io
+
 import time
+import streamlit as st
+import json  # [LOTTIE_CHANGE] Imported json to read the local file
+from streamlit_lottie import st_lottie  # [LOTTIE_CHANGE] Imported st_lottie
+
+@st.cache_data
+def load_lottiefile(filepath: str):
+    with open(filepath, "r", encoding="utf-8") as f:
+        return json.load(f)
+
+# [LOTTIE_CHANGE] Define the path to your local JSON lottie file here
+LOTTIE_FILE_PATH = "animations/PixelDuck.json" 
+lottie_anim = load_lottiefile(LOTTIE_FILE_PATH) # [LOTTIE_CHANGE]
 
 # ==========================================================
 # 1. PIXEL THEME & CSS INJECTION (Including Sidebar Styling)
@@ -15,6 +22,12 @@ def apply_pixel_theme():
     /* 1. Import Pixel Fonts */
     @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Silkscreen:wght@400;700&display=swap');
     @import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined');
+
+    /* [LOTTIE_CHANGE] HIDE NATIVE STREAMLIT RUNNING SPINNER */
+    [data-testid="stStatusWidget"] {
+        display: none !important;
+    }
+
     /* 2. Global Variables */
     :root {
         --pixel-bg: #0d1117;
@@ -274,12 +287,38 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
+
+from model_loader import get_chat_model
+from load_everything import load_everything
+from ingestion import add_user_writeup
+import pypdf
+import io
+
 # 2. Toggle in upper right corner
 _, col_toggle = st.columns([3, 1], vertical_alignment="center")
 with col_toggle:
     use_offline = st.toggle("Offline Mode", value=False)
 
-vectorstore, rag_chain, hint_chain, coaching_chain = load_everything(use_offline)
+# [LOTTIE_CHANGE] INITIAL LOAD ANIMATION
+# Checks if models are loaded OR if the user flipped the offline toggle
+if "models" not in st.session_state or st.session_state.get("offline_state") != use_offline:
+    
+    init_loader = st.empty() # [LOTTIE_CHANGE] Create empty container
+    with init_loader.container():
+        st_lottie(lottie_anim, height=300, key="init_anim") # [LOTTIE_CHANGE] Show animation
+        
+    # Run heavy loading function
+    vectorstore, rag_chain, hint_chain, coaching_chain = load_everything(use_offline)
+    
+    # Save states
+    st.session_state["models"] = (vectorstore, rag_chain, hint_chain, coaching_chain)
+    st.session_state["offline_state"] = use_offline
+    
+    # [LOTTIE_CHANGE] Destroy loading screen once processing completes
+    # init_loader.empty() 
+else:
+    # Retrieve pre-loaded models from session state
+    vectorstore, rag_chain, hint_chain, coaching_chain = st.session_state["models"]
 
 with st.sidebar:
     st.markdown('<h1 class="logo-title">CTF COACH</h1>', unsafe_allow_html=True)
