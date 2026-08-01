@@ -49,7 +49,7 @@ Rather than just handing over answers, the app is built around helping the user 
 
 . Groq Cloud — hosted LLM inference (currently a 70B-class model) for extraction, RAG, hinting, and coaching
 
-. Local Mistral-7B-Instruct-v0.2 (4-bit quantized via bitsandbytes) — original local inference path; planned for an offline mode via QLoRA fine-tuning
+. Local Qwen/Qwen2.5-7B-Instruct (4-bit quantized via bitsandbytes) — original local inference path; planned for an offline mode via QLoRA fine-tuning
 
 . sentence-transformers/all-MiniLM-L6-v2 (via HuggingFaceEmbeddings) — fully local embeddings, no API calls
 
@@ -96,6 +96,16 @@ To add new public writeups to the corpus later, just use the tab in the website 
 ---
 
 # 📸 Demo
+<img width="1920" height="1080" alt="Screenshot (153)" src="https://github.com/user-attachments/assets/170cf9fb-c6be-461a-9685-928bc6820848" />
+<img width="1920" height="1080" alt="Screenshot (152)" src="https://github.com/user-attachments/assets/7d1ea8d9-f171-4ef9-ac0c-7979ccb91b8f" />
+<img width="1920" height="1080" alt="Screenshot (147)" src="https://github.com/user-attachments/assets/c6ec4dc5-7510-466a-82e8-63d01be60804" />
+<img width="1920" height="1080" alt="Screenshot (149)" src="https://github.com/user-attachments/assets/97a8fb7a-3713-476c-b3ee-f80ce23f5c4b" />
+<img width="1920" height="806" alt="Screenshot (145)" src="https://github.com/user-attachments/assets/a54c60bb-3c8f-48e7-8646-c137b8c9ab9d" />
+<img width="1920" height="850" alt="Screenshot (146)" src="https://github.com/user-attachments/assets/936b8136-7739-408f-870c-8fbe3528189e" />
+<img width="1920" height="1080" alt="Screenshot (148)" src="https://github.com/user-attachments/assets/72f62411-4cba-4ee3-8609-bccd2bbda892" />
+<img width="1920" height="1080" alt="Screenshot (150)" src="https://github.com/user-attachments/assets/85eed689-4635-4061-b2a9-94cdd88b7d07" />
+<img width="1920" height="1080" alt="Screenshot (151)" src="https://github.com/user-attachments/assets/35237580-efc9-4b19-98e7-017a43c5643e" />
+<img width="1920" height="817" alt="Screenshot (144)" src="https://github.com/user-attachments/assets/e5eb018c-b702-4b91-a2c9-120668f6c647" />
 
 
 ---
